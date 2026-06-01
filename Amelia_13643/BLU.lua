@@ -89,8 +89,14 @@ local sets = {
     ['MAB'] = {
         Ear1 = 'Moldavite Earring',
     },
-    ['WSAcc'] = {},
-};
+    ['Cures'] = {
+        Neck = 'Colossus\'s Torque',
+        Body = 'Magus Jubbah',
+        Waist = 'Ryl.Kgt. Belt',
+    },
+    ['CurePot'] = {
+        Hands = { Name = 'Silk Cuffs', Augment = { [1] = 'MP+15', [2] = '"Cure" potency +2%' } },
+    }};
 profile.Sets = sets;
 
 profile.Packer = {
@@ -191,47 +197,47 @@ end
 profile.HandleMidcast = function()
     --Get Action
     local act = gData.GetAction();
+    local bluType = blu.GetBLU(act.Name);
+    local chain = gData.GetBuffCount('Chain Affinity') > 0;
 
-    if(act.Skill == 'Blue Magic')then
-        local bluType = blu.GetBLU(act.Name);
-        local chain = gData.GetBuffCount('Chain Affinity') > 0;
+    if(bluType == 'Not Blue Magic')then
+        return;
+    end
 
-        if(bluType == 'Not Blue Magic')then
-            return;
-        end
+    print (bluType)
 
-        local spellSet = sets.Idle;
-        if(bluType == 'Physical')then
-            spellSet = gFunc.Combine(spellSet, sets.TP);
-        elseif(bluType == 'Magical')then
-            spellSet = gFunc.Combine(spellSet, sets.Nuke);
-            spellSet = gFunc.Combine(spellSet, sets.MAB);
-        elseif(bluType == 'Healing' and sets.CurePot ~= nil)then
-            spellSet = gFunc.Combine(spellSet, sets.CurePot);
-        elseif(bluType == 'Breath' and sets.Breath ~= nil)then
-            spellSet = gFunc.Combine(spellSet, sets.Breath);
-        elseif(bluType == 'Enfeebling' and sets.Enfeebling ~= nil)then
-            spellSet = gFunc.Combine(spellSet, sets.Enfeebling);
-        elseif(bluType == 'Enhancing' and sets.Enhancing ~= nil)then
-            spellSet = gFunc.Combine(spellSet, sets.Enhancing);
-        end
+    local spellSet = sets.Idle;
+    if(bluType == 'Physical')then
+        spellSet = gFunc.Combine(spellSet, sets.TP);
+    elseif(bluType == 'Magical')then
+        spellSet = gFunc.Combine(spellSet, sets.Nuke);
+        spellSet = gFunc.Combine(spellSet, sets.MAB);
+    elseif(bluType == 'Healing' and sets.CurePot ~= nil)then
+        spellSet = gFunc.Combine(spellSet, sets.Cures);
+        spellSet = gFunc.Combine(spellSet, sets.CurePot);
+    elseif(bluType == 'Breath' and sets.Breath ~= nil)then
+        spellSet = gFunc.Combine(spellSet, sets.Breath);
+    elseif(bluType == 'Enfeebling' and sets.Enfeebling ~= nil)then
+        spellSet = gFunc.Combine(spellSet, sets.Enfeebling);
+    elseif(bluType == 'Enhancing' and sets.Enhancing ~= nil)then
+        spellSet = gFunc.Combine(spellSet, sets.Enhancing);
+    end
 
-        local bluModSet, bluMods = blu.getMods(act.Name, sets);
-        spellSet = gFunc.Combine(spellSet, bluModSet);
+    local bluModSet, bluMods = blu.getMods(act.Name, sets);
+    spellSet = gFunc.Combine(spellSet, bluModSet);
 
-        local modstring = blu.SetModString(bluMods);
-        if(modstring ~= '')then
-            print(chat.message(act.Name .. ':  ') .. chat.header(modstring));
-        end
+    local modstring = blu.SetModString(bluMods);
+    if(modstring ~= '')then
+        print(chat.message(act.Name .. ':  ') .. chat.header(modstring));
+    end
 
-        if(chain and bluType == 'Physical')then
-            local gorget = blu.GetGorget(act.Name, const.Gorgets);
-            if (gorget ~= nil)then
-                spellSet.Neck = gorget;
-            end
+    if(chain and bluType == 'Physical')then
+        local gorget = blu.GetGorget(act.Name, const.Gorgets);
+        if (gorget ~= nil)then
+            spellSet.Neck = gorget;
         end
     end
-    
+
     gFunc.EquipSet(spellSet);
 end
 
