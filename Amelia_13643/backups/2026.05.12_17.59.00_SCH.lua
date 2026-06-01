@@ -1,0 +1,235 @@
+local profile = {};
+
+local chat = require('chat');
+
+local mod = gFunc.LoadFile('..\\lib\\modifierTables.lua');
+
+local warpring = function()
+    AshitaCore:GetChatManager():QueueCommand(-1, '/item "Warp Ring" <me>');
+end
+
+local const = gFunc.LoadFile('constants.lua');
+
+local jHelp = gFunc.LoadFile('..\\lib\\JobHelpers.lua');
+
+local help = gFunc.LoadFile('..\\lib\\helpers.lua');
+
+local sets = {
+    ['Idle'] = {
+        Main = 'Iridal Staff',
+        Head = 'Scholar\'s M.board',
+        Neck = 'Focus Collar',
+        Ear1 = 'Moldavite Earring',
+        Body = 'Scholar\'s Gown',
+        Hands = 'Scholar\'s Bracers',
+        Ring1 = 'Echad Ring',
+        Ring2 = 'Warp Ring',
+        Back = 'Dodge Cape',
+        Waist = 'Swift Belt',
+        Legs = 'Scholar\'s Pants',
+        Feet = 'Scholar\'s Loafers',
+    },
+    ['TP'] = {
+    },
+    ['Resting'] = {
+    },
+    ['STR'] = {},
+    ['DEX'] = {},
+    ['VIT'] = {},
+    ['AGI'] = {},
+    ['INT'] = {},
+    ['MND'] = {},
+    ['CHR'] = {},
+    ['FastCast'] = {
+        Head = 'Enchanting Ribbon',
+    },
+    ['lock'] = {
+    },
+    ['Blink'] = {
+        ['Legs'] = 'Hume Pants',
+    },
+    ['Nuke'] = {
+        Main = 'Iridal Staff',
+        Head = 'Scholar\'s M.board',
+        Neck = 'Focus Collar',
+        Ear1 = 'Moldavite Earring',
+        Body = 'Scholar\'s Gown',
+        Hands = 'Scholar\'s Bracers',
+        Ring1 = 'Eremite\'s Ring +1',
+        Ring2 = 'Eremite\'s Ring +1',
+    },
+};
+profile.Sets = sets;
+
+profile.Packer = {
+};
+
+local Settings = {
+    CurrentLevel = 0,
+    CurrentSub = '',
+    TP_Mode = 'Haste',
+    wrdelay = 0,
+    warpRing = false,
+    wrUse = false;
+    blinkDelay = 0,
+    displayHead = false,
+}
+
+profile.OnLoad = function()
+    gSettings.AllowAddSet = true;
+    jHelp.ThotBar();
+    gFunc.LockStyle(sets.lock);
+    AshitaCore:GetChatManager():QueueCommand(-1, '/alias /warpring /lac fwd warpring');
+    Settings.wrdelay = os.time() + 25;
+    Settings.warpRing = false;
+end
+
+profile.OnUnload = function()
+    AshitaCore:GetChatManager():QueueCommand(-1, '/alias delete /warpring');
+    AshitaCore:GetChatManager():QueueCommand(-1, '/lockstyle off');
+end
+
+profile.HandleCommand = function(args)
+    if (#args > 0) then
+        if (args[1]:any('warpring')) then
+            Settings.wrdelay = help.WarpRing();
+            Settings.warpRing = true;
+        end
+    end
+end
+
+profile.HandleDefault = function()
+    --Player Info
+    local player = gData.GetPlayer();
+
+    if (Settings.wrdelay <= os.time() and Settings.warpRing) then
+        AshitaCore:GetChatManager():QueueCommand(-1, '/item \"Warp Ring\" <me>');
+        Settings.wrDelay = os.time() + 1;
+        if(Settings.wrDelay >= os.time())then
+            Settings.warpRing = false;
+        end
+    end
+
+    --State Engine
+    local stateSet = sets.Idle;
+    if (player.Status == 'Engaged') then
+        stateSet = gFunc.Combine(stateSet, sets.TP);
+
+    elseif (player.Status == 'Resting') then
+        stateSet = gFunc.Combine(stateSet, sets.Resting);
+    else
+    end
+    if (Settings.warpRing) then
+        stateSet = gFunc.Combine(stateSet, {['Ring1'] = 'Warp Ring'});
+    end
+    gFunc.EquipSet(stateSet);
+    equippedSet = stateSet;
+
+    help.CheckBlink(equippedSet, sets.Blink);
+end
+
+profile.HandleAbility = function()
+    local act = gData.GetAction();
+
+    --Init Set
+    local abSet = sets.Idle;
+
+    --ForceBlink
+    help.ForceBlink(sets.Blink, abSet);
+
+    --Waltz
+    if (string.find(act.Name, 'Waltz'))then
+        abSet = gFunc.Combine(abSet, sets.Waltz);
+    end
+
+    --Jig
+    if (string.find(act.Name, 'Jig'))then
+        abSet = gFunc.Combine(abSet, sets.Jig);
+    end
+
+    --Equip Final abSet
+    gFunc.EquipSet(abSet);
+end
+
+profile.HandleItem = function()
+end
+
+profile.HandlePrecast = function()
+    --Init
+    local act = gData.GetAction();
+    local pcSet = sets.FastCast;
+    if (act.Type == 'White Magic' and gData.GetBuffCount('Light Arts') > 0)then
+        pcSet = gFunc.Combine(pcSet, { Feet = 'Scholar\'s Loafers' });
+    end
+    if (act.Type == 'Black Magic' and gData.GetBuffCount('Dark Arts') > 0)then
+        pcSet = gFunc.Combine(pcSet, { Feet = 'Scholar\'s Loafers' });
+    end
+    gFunc.EquipSet(pcSet);
+end
+
+profile.HandleMidcast = function()
+    --Get Action
+    local act = gData.GetAction();
+
+    local castSet = sets.Idle;
+    if (string.find(act.Skill, 'Elemental'))then
+        castSet = gFunc.Combine(castSet, sets.Nuke);
+    end
+    gFunc.EquipSet(castSet);
+end
+
+profile.HandlePreshot = function()
+end
+
+profile.HandleMidshot = function()
+end
+
+profile.HandleWeaponskill = function()
+    --Get the Weapon Skill:
+    local act = gData.GetAction();
+    --Get the WS Mods:
+    local mods = mod.getMods(act.Name);
+    --Compile the String to send to chat log
+    local modstring = mod.SetModString(mods);
+    --Pre-define WS Set
+    local wsSet = sets.TP;
+
+    --Iterate through mods table to construct the best set for the WS based on the mods:
+    if (mods ~= nil) then
+        for i = 1, #mods do
+            local mod = mods[i].stat;
+            wsSet = gFunc.Combine(wsSet, sets[mod]);
+        end
+    end
+
+    --Print Mod string to chat log:
+    print(chat.message(act.Name .. ':  ') .. chat.header(modstring));
+
+    --Append MAB gear for Aeolian Edge:
+    if (mod.IsMAB(act.Name)) then
+        wsPrebuild = {}
+        wsPrebuild.Element = mod.IsMAB(act.Name);
+        wsSet = gFunc.Combine(wsSet, sets.MAB);
+        if (help.GetObi(wsPrebuild, const.Obis)) then
+            wsSet = gFunc.Combine(wsSet, { Waist = help.GetObi(wsPrebuild, const.Obis) });
+        end
+    end
+
+    if (act.Name == 'Sidewinder' or act.Name == 'Namas Arrow') then
+        wsSet = gFunc.Combine(wsSet, sets.Racc);
+        wsSet = gFunc.Combine(wsSet, sets.BowWS);
+    end
+
+    --Gorget Determination
+    local gorget = mod.getGorget(act.Name, const.Gorgets);
+    if (gorget ~= nil) then
+        wsSet.Neck = gorget;
+    end
+
+    if (act.Name == 'Sidewinder' or act.Name == 'Namas Arrow') then
+    end
+    --Equip Final WS set:
+    gFunc.EquipSet(wsSet);
+end
+
+return profile;
