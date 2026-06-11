@@ -46,7 +46,9 @@ local sets = {
         Waist = 'Corsette',
     },
     ['FastCast'] = {
-        Head = 'Enchanting Ribbon',
+        Head = { Name = 'Entrancing Ribbon', Augment = { [1] = 'Pet: Rng. Acc.+2', [2] = '"Fast Cast"+1', [3] = 'Pet: Accuracy+2' } },
+        Ear1 = 'Loquac. Earring',
+        Feet = 'Rostrum Pumps',
     },
     ['lock'] = {
     },
@@ -55,6 +57,12 @@ local sets = {
     },
     ['Nuke'] = {
     },
+    ['Singing'] = {
+        Head = 'Demon Helm +1',
+        Body = 'Minstrel\'s Coat',
+    },
+    ['Wind'] = {},
+    ['String'] = {}
 };
 profile.Sets = sets;
 
@@ -89,8 +97,11 @@ end
 profile.HandleCommand = function(args)
     if (#args > 0) then
         if (args[1]:any('warpring')) then
-            Settings.wrdelay = help.WarpRing();
-            Settings.warpRing = true;
+            local wrDelay = help.WarpRing();
+            if (wrDelay ~= nil) then
+                Settings.wrdelay = wrDelay;
+                Settings.warpRing = true;
+            end
         end
     end
 end
@@ -99,11 +110,12 @@ profile.HandleDefault = function()
     --Player Info
     local player = gData.GetPlayer();
 
-    if (Settings.wrdelay <= os.time() and Settings.warpRing) then
-        AshitaCore:GetChatManager():QueueCommand(-1, '/item \"Warp Ring\" <me>');
-        Settings.wrDelay = os.time() + 1;
-        if (Settings.wrDelay >= os.time()) then
+    if (Settings.warpRing and Settings.wrdelay <= os.time()) then
+        local result = help.WarpRingUse();
+        if (result == nil or result == 0) then
             Settings.warpRing = false;
+        else
+            Settings.wrdelay = result;
         end
     end
 
@@ -149,6 +161,10 @@ profile.HandleAbility = function()
 end
 
 profile.HandleItem = function()
+    local act = gData.GetAction();
+    if(act.Name == 'Warp Ring')then
+        Settings.warpRing = false;
+    end
 end
 
 profile.HandlePrecast = function()
@@ -171,6 +187,11 @@ profile.HandleMidcast = function()
         actSet = gFunc.Combine(actSet, { Range = 'Battle Horn +1' });
     end
 
+    --Madrigal
+    if (string.find(act.Name, 'Madrigal'))then
+        actSet = gFunc.Combine(actSet, { Range = 'Traversiere +2'});
+    end
+
     --CHR Gear
     if (string.find(act.Name, 'Lullaby') or
         string.find(act.Name, 'Elegy') or
@@ -178,9 +199,17 @@ profile.HandleMidcast = function()
         actSet = gFunc.Combine(actSet, sets.CHR)
     end
 
-    if (string.find(act.Name, 'Lullaby'))then
-        actSet = gFunc.Combine(actSet, { Range = 'Mary\'s Horn' })
+    if (string.find(act.Name, 'Lullaby') or string.find(act.Name, 'Ballad'))then
+        actSet = gFunc.Combine(actSet, { Range = 'Terpander' })
     end
+
+    --Combine Singing
+    actSet = gFunc.Combine(actSet, sets.Singing);
+
+    --Get Instrument And Equip appropriate skill gear
+    local inst = actSet.Range;
+    local skill = jHelp.GetInstrument(inst);
+    actSet = gFunc.Combine(actSet, sets[skill]);
 
     gFunc.EquipSet(actSet);
 end

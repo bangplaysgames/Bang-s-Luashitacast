@@ -156,6 +156,14 @@ bluTables.BLU = {
     ["Barbed Crescent"] = { type = "Physical", mods = { ['DEX'] = 50 } },
     ["Bilgestorm"] = { type = "Physical", mods = {} },
     ["Bloodrake"] = { type = "Physical", mods = { ['STR'] = 30, ['MND'] = 30 } },
+    ["Searing Tempest"] = { type = "Magical", mods = {} },
+    ["Blinding Fulgor"] = { type = "Magical", mods = {} },
+    ["Spectral Floe"] = { type = "Magical", mods = {} },
+    ["Scouring Spate"] = { type = "Magical", mods = {} },
+    ["Anvil Lightnight"] = { type = "Magical", mods = {} },
+    ["Silent Storm"] = { type = "Magical", mods = {} },
+    ["Entomb"] = { type = "Magical", mods = {} },
+    ["Tenebral Crush"] = { type = "Magical", mods = {} }
 
 }
 

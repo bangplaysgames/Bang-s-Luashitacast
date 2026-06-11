@@ -61,8 +61,11 @@ end
 profile.HandleCommand = function(args)
     if (#args > 0) then
         if (args[1]:any('warpring')) then
-            Settings.wrdelay = help.WarpRing();
-            Settings.warpRing = true;
+            local wrDelay = help.WarpRing();
+            if (wrDelay ~= nil) then
+                Settings.wrdelay = wrDelay;
+                Settings.warpRing = true;
+            end
         end
     end
 end
@@ -71,9 +74,13 @@ profile.HandleDefault = function()
     --Player Info
     local player = gData.GetPlayer();
 
-    if (Settings.wrdelay <= os.time() and Settings.warpRing) then
-        AshitaCore:GetChatManager():QueueCommand(-1, '/item \'Warp Ring\' <me>');
-        Settings.warpRing = false;
+    if (Settings.warpRing and Settings.wrdelay <= os.time()) then
+        local result = help.WarpRingUse();
+        if (result == nil or result == 0) then
+            Settings.warpRing = false;
+        else
+            Settings.wrdelay = result;
+        end
     end
 
     --State Engine
@@ -84,12 +91,17 @@ profile.HandleDefault = function()
     elseif (player.Status == 'Resting') then
         stateSet = gFunc.Combine(stateSet, sets.Resting);
     else
+        if(player.IsMoving)then
+            stateSet = gFunc.Combine(stateSet, { Legs = 'Blood Cuisses' });
+        end
+    end
+    if (Settings.warpRing) then
+        stateSet = gFunc.Combine(stateSet, { ['Ring1'] = 'Warp Ring' });
     end
     gFunc.EquipSet(stateSet);
-    if (Settings.warpRing) then
-        gFunc.Equip('ring1', 'WarpRing');
-    end
-    help.CheckBlink();
+    equippedSet = stateSet;
+
+    help.CheckBlink(equippedSet, sets.Blink);
 end
 
 profile.HandleAbility = function()
@@ -97,6 +109,10 @@ profile.HandleAbility = function()
 end
 
 profile.HandleItem = function()
+    local act = gData.GetAction();
+    if(act.Name == 'Warp Ring')then
+        Settings.warpRing = false;
+    end
 end
 
 profile.HandlePrecast = function()

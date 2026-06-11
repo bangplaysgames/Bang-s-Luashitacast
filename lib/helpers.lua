@@ -283,17 +283,91 @@ helpers.GetObi = function(spell, Obis)
 	end
 end
 
+local _warpRingEquippedAt = 0;
+local WARP_RING_ENCHANT_DELAY = 9; -- Warp Ring requires 8 seconds after equipping before its enchantment can be used
+local vanaOffset = 0x3C307D70;
+
+local function getVanaTime()
+	local timePointer = ashita.memory.find('FFXiMain.dll', 0, '8B0D????????8B410C8B49108D04808D04808D04808D04C1C3', 2, 0);
+	if (timePointer == nil or timePointer == 0) then return nil; end
+	local p = ashita.memory.read_uint32(timePointer);
+	p = ashita.memory.read_uint32(p);
+	return ashita.memory.read_uint32(p + 0x0C);
+end
+
+local function findWarpRingInInventory()
+	local invMgr = AshitaCore:GetMemoryManager():GetInventory();
+	local resMgr = AshitaCore:GetResourceManager();
+	for _, container in ipairs({0, 8, 10, 11, 12, 13, 14, 15, 16}) do
+		for index = 1, 80 do
+			local item = invMgr:GetContainerItem(container, index);
+			if (item ~= nil and item.Id ~= nil and item.Id ~= 0) then
+				local resource = resMgr:GetItemById(item.Id);
+				if (resource ~= nil and resource.Name ~= nil) then
+					local itemName = resource.Name[1];
+					if (itemName == 'Warp Ring') then
+						return item;
+					end
+				end
+			end
+		end
+	end
+	return nil;
+end
+
+-- Uses cudgel.lua's formula: (Extra[5] + vanaOffset) - currentVanaTime = seconds remaining.
+local function getWarpRingRecast(item)
+	if (item == nil or item.Extra == nil or #item.Extra < 8) then return nil; end
+	local vanaTime = getVanaTime();
+	if (vanaTime == nil) then return nil; end
+	local rawTime = struct.unpack('L', item.Extra, 5);
+	local useTime = (rawTime + vanaOffset) - vanaTime;
+	if (useTime < 3) then useTime = 0; end
+	return math.max(0, useTime);
+end
+
+-- Returns the Warp Ring's remaining cooldown in seconds, or nil if unreadable.
+helpers.GetWarpRingCooldown = function()
+	local item = findWarpRingInInventory();
+	if (item == nil) then return nil; end
+	return getWarpRingRecast(item);
+end
+
+-- Equips Warp Ring and returns the os.time() when it will be ready to use, or nil on failure.
 helpers.WarpRing = function()
-	local delay = os.time() + 11;
-	if(gFunc ~= nil and gFunc.Equip ~= nil)then
-		gFunc.Equip('ring1', 'Warp Ring');
+	local item = findWarpRingInInventory();
+	if (item == nil) then return nil; end
+	local recast = getWarpRingRecast(item) or 0;
+	local _gFunc = _G['gFunc'];
+	if (_gFunc == nil or _gFunc.Equip == nil) then return nil; end
+	_gFunc.Equip('ring1', 'Warp Ring');
+	_warpRingEquippedAt = os.time();
+	local delay = math.max(recast, WARP_RING_ENCHANT_DELAY);
+	return os.time() + delay;
+end
+
+-- Called each tick. Returns nil when done (used or failed), or os.time() of next check when still waiting.
+helpers.WarpRingUse = function()
+	local item = findWarpRingInInventory();
+	if (item == nil or item.Extra == nil or #item.Extra < 8) then return nil; end
+
+	-- Self-initialize equip timer when ring was equipped externally (e.g. BLU gear sets)
+	if (_warpRingEquippedAt == 0) then
+		_warpRingEquippedAt = os.time();
 	end
-	if(chat ~= nil and chat.header ~= nil)then
-		print(chat.header('Warp Ring Activated: ' .. tostring(delay - os.time())))
-	else
-		print('Warp Ring Activated: ' .. tostring(delay - os.time()))
+
+	local recast = getWarpRingRecast(item) or 0;
+	local equipRemaining = math.max(0, (_warpRingEquippedAt + WARP_RING_ENCHANT_DELAY) - os.time());
+
+	local remaining = math.max(recast, equipRemaining);
+
+	if (remaining > 0) then
+		return os.time() + remaining + 1;
 	end
-	return delay
+
+	AshitaCore:GetChatManager():QueueCommand(-1, '/item "Warp Ring" <me>');
+	_warpRingEquippedAt = 0;
+	return nil;
 end
 
 helpers.ForceBlink = function(es, as)

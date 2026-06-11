@@ -32,18 +32,20 @@ local sets = {
         Feet = 'Nashira Crackows',
     },
     ['TP'] = {
+        Main = 'Xiutleato',
+        Sub = 'Coral Sword',
         Range = 'Moonring Blade',
         Head = 'Homam Zucchetto',
         Neck = 'Fortitude Torque',
         Ear1 = 'Brutal Earring',
-        Ear2 = 'Coral Earring',
+        Ear2 = 'Suppanomimi',
         Body = 'Mirage Jubbah',
         Hands = 'Magus Bazubands',
         Ring1 = 'Sniper\'s Ring +1',
         Ring2 = 'Rajas Ring',
         Back = { Name = 'Nomad\'s Mantle', Augment = { [1] = 'DEF+3', [2] = '"Dual Wield"+1' } },
         Waist = 'Swift Belt',
-        Legs = { Name = 'Magus Shalwar +1', Augment = { [1] = '"Regen"+3', [2] = '"Refresh"+1' } },
+        Legs = 'Homam Cosciales',
         Feet = 'Nashira Crackows',
     },
     ['Resting'] = {
@@ -58,6 +60,13 @@ local sets = {
         Waist = {Name = 'Ryl.Kgt. Belt', Mods = { STR = 2, DEX = 2, AGI = 2, INT = 2, MND = 2, CHR = 2 }},
     },
     ['STR_NoSlow'] = {
+        Head = {Name = 'Voyager Sallet', Mods = { STR = 3, DEX = 4 }},
+        Neck = {Name = 'Harmonia\'s Torque', Mods = { STR = 2, VIT = -1}},
+        Body = {Name = 'Magus Jubbah', Mods = { STR = 3, DEX = 3 }},
+        Ring1 = {Name = 'Flame Ring', Mods = { STR = 5, INT = 2, MND = -2 }},
+        Ring2 = {Name = 'Rajas Ring', Mods = { STR = 5, DEX = 5 }},
+        Back = {Name = 'Amemet Mantle', Mods = { STR = 1 }},
+        Waist = {Name = 'Ryl.Kgt. Belt', Mods = { STR = 2, DEX = 2, AGI = 2, INT = 2, MND = 2, CHR = 2 }},
     },
     ['DEX'] = {
         Head = { Name = 'Voyager Sallet', Mods = {STR = 3, DEX = 4 }},
@@ -67,15 +76,29 @@ local sets = {
         Legs = { Name = 'Magus Shalwar +1', Augment = { [1] = '"Regen"+3', [2] = '"Refresh"+1' }, Mods = {DEX = 5, VIT = 5, AGI = 5} },
     },
     ['DEX_NoSlow'] = {
+        Head = { Name = 'Voyager Sallet', Mods = {STR = 3, DEX = 4 }},
+        Body = { Name = 'Magus Jubbah', Mods = {STR = 3, DEX = 3}},
+        Ring2 = { Name = 'Rajas Ring', Mods = {STR = 5, DEX = 5} },
+        Waist = {Name = 'Ryl.Kgt. Belt', Mods = { STR = 2, DEX = 2, AGI = 2, INT = 2, MND = 2, CHR = 2 }},
+        Legs = { Name = 'Magus Shalwar +1', Augment = { [1] = '"Regen"+3', [2] = '"Refresh"+1' }, Mods = {DEX = 5, VIT = 5, AGI = 5} },
     },
     ['VIT'] = {},
-    ['AGI'] = {},
+    ['AGI'] = {
+        Head = { Name = 'Emperor Hairpin', Mods = { DEX = 3, AGI = 3 } },
+        Ear1 = { Name = 'Drone Earring', Mods = { AGI = 3 } },
+        Ear2 = { Name = 'Drone Earring', Mods = { AGI = 3 } },
+        Back = { Name = 'Nomad\'s Mantle', Mods = { AGI = 1 }, Augment = { [1] = 'DEF+3', [2] = '"Dual Wield"+1' } },
+        Waist = { Name = 'Ryl.Kgt. Belt', Mods = { STR = 2, DEX = 2, AGI = 2, INT = 2, MND = 2, CHR = 2 } },
+        Legs = { Name = 'Magus Shalwar +1', Mods = { DEX = 5, VIT = 5, AGI = 5 }, Augment = { [1] = '"Regen"+3', [2] = '"Refresh"+1' } },
+        Feet = { Name = 'Mirage Charuqs +1', Mods = { AGI = 4, INT = 4 } },
+    },
     ['INT'] = {},
     ['MND'] = {},
     ['CHR'] = {},
     ['FastCast'] = {
         Head = { Name = 'Entrancing Ribbon', Augment = { [1] = 'Pet: Rng. Acc.+2', [2] = '"Fast Cast"+1', [3] = 'Pet: Accuracy+2' } },
         Ear1 = 'Loquac. Earring',
+        Legs = 'Blood Cuisses',
     },
     ['lock'] = {
     },
@@ -84,7 +107,10 @@ local sets = {
     },
     ['Nuke'] = {
     },
-    ['Refresh'] = {},
+    ['Refresh'] = {
+        Body = "Mirage Jubbah",
+        Legs = { Name = 'Magus Shalwar +1', Mods = { DEX = 5, VIT = 5, AGI = 5 }, Augment = { [1] = '"Regen"+3', [2] = '"Refresh"+1' } },
+    },
     ['Waltz'] = {},
     ['MAB'] = {
         Ear1 = 'Moldavite Earring',
@@ -96,6 +122,9 @@ local sets = {
     },
     ['CurePot'] = {
         Hands = { Name = 'Silk Cuffs', Augment = { [1] = 'MP+15', [2] = '"Cure" potency +2%' } },
+    },
+    ['EnhancingBLU'] = {
+        Feet = 'Mirage Charuqs +1',
     }};
 profile.Sets = sets;
 
@@ -130,8 +159,8 @@ end
 profile.HandleCommand = function(args)
     if (#args > 0) then
         if (args[1]:any('warpring')) then
-            Settings.wrdelay = help.WarpRing();
             Settings.warpRing = true;
+            Settings.wrdelay = os.time() + 1;
         end
     end
 end
@@ -140,8 +169,8 @@ profile.HandleDefault = function()
     --Player Info
     local player = gData.GetPlayer();
 
-    if (Settings.wrdelay <= os.time() and Settings.warpRing) then
-        AshitaCore:GetChatManager():QueueCommand(-1, '/item \"Warp Ring\" <me>');
+    if (Settings.warpRing and gData.GetEquipment().Ring1.Name == 'Warp Ring') then
+        help.WarpRingUse();
     end
 
     --State Engine
@@ -154,6 +183,9 @@ profile.HandleDefault = function()
     else
         if(player.MPP < 75)then
             stateSet = gFunc.Combine(stateSet, sets.Refresh);
+        end
+        if(player.IsMoving)then
+            stateSet = gFunc.Combine(stateSet, { Legs = 'Blood Cuisses' });
         end
     end
     if (Settings.warpRing) then
@@ -204,8 +236,6 @@ profile.HandleMidcast = function()
         return;
     end
 
-    print (bluType)
-
     local spellSet = sets.Idle;
     if(bluType == 'Physical')then
         spellSet = gFunc.Combine(spellSet, sets.TP);
@@ -219,8 +249,8 @@ profile.HandleMidcast = function()
         spellSet = gFunc.Combine(spellSet, sets.Breath);
     elseif(bluType == 'Enfeebling' and sets.Enfeebling ~= nil)then
         spellSet = gFunc.Combine(spellSet, sets.Enfeebling);
-    elseif(bluType == 'Enhancing' and sets.Enhancing ~= nil)then
-        spellSet = gFunc.Combine(spellSet, sets.Enhancing);
+    elseif(bluType == 'Enhancing' and sets.EnhancingBLU ~= nil)then
+        spellSet = gFunc.Combine(spellSet, sets.EnhancingBLU);
     end
 
     local bluModSet, bluMods = blu.getMods(act.Name, sets);
@@ -234,8 +264,13 @@ profile.HandleMidcast = function()
     if(chain and bluType == 'Physical')then
         local gorget = blu.GetGorget(act.Name, const.Gorgets);
         if (gorget ~= nil)then
-            spellSet.Neck = gorget;
+            spellSet = gFunc.Combine(spellSet, {Neck = gorget});
         end
+    end
+
+    --Recombine MAB for Nukes
+    if(bluType == 'Magical')then
+        spellSet = gFunc.Combine(spellSet, sets.MAB);
     end
 
     gFunc.EquipSet(spellSet);

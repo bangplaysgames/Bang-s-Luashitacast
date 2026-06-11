@@ -96,8 +96,11 @@ end
 profile.HandleCommand = function(args)
     if (#args > 0) then
         if (args[1]:any('warpring')) then
-            Settings.wrdelay = help.WarpRing();
-            Settings.warpRing = true;
+            local wrDelay = help.WarpRing();
+            if (wrDelay ~= nil) then
+                Settings.wrdelay = wrDelay;
+                Settings.warpRing = true;
+            end
         end
     end
 end
@@ -106,11 +109,12 @@ profile.HandleDefault = function()
     --Player Info
     local player = gData.GetPlayer();
 
-    if (Settings.wrdelay <= os.time() and Settings.warpRing) then
-        AshitaCore:GetChatManager():QueueCommand(-1, '/item \"Warp Ring\" <me>');
-        Settings.wrDelay = os.time() + 1;
-        if(Settings.wrDelay >= os.time())then
+    if (Settings.warpRing and Settings.wrdelay <= os.time()) then
+        local result = help.WarpRingUse();
+        if (result == nil or result == 0) then
             Settings.warpRing = false;
+        else
+            Settings.wrdelay = result;
         end
     end
 
@@ -156,6 +160,10 @@ profile.HandleAbility = function()
 end
 
 profile.HandleItem = function()
+    local act = gData.GetAction();
+    if(act.Name == 'Warp Ring')then
+        Settings.warpRing = false;
+    end
 end
 
 profile.HandlePrecast = function()

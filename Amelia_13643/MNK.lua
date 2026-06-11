@@ -116,6 +116,10 @@ profile.HandleAbility = function()
 end
 
 profile.HandleItem = function()
+    local act = gData.GetAction();
+    if(act.Name == 'Warp Ring')then
+        Settings.warpRing = false;
+    end
 end
 
 profile.HandlePrecast = function()

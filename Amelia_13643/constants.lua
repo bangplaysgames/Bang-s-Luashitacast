@@ -1,8 +1,7 @@
 local constants = {}
 
 constants.Gorgets = {
-    ['Snow'] = 'Snow Gorget',
-    ['Breeze'] = 'Breeze Gorget',
+    ['Soil'] = 'Soil Gorget'
 }
 
 constants.Staves = {

@@ -77,7 +77,9 @@ JobHelpers.GetInstrument = function(ranged)
         ['Pyf Harp'] = 'String',
         ['Daurdabla'] = 'String',
         ['Oneiros Harp'] = 'String',
-        ['Langeleik'] = 'String'
+        ['Langeleik'] = 'String',
+        ['Terpander'] = 'String',
+        ['Battle Horn +1'] = 'Wind',
     }
     return instruments[ranged];
 end
@@ -85,11 +87,11 @@ end
 JobHelpers.IsNINNuke = function(spell)
     local name = spell.Name;
     if (string.find(name, 'Katon') or
-        string.find(name, 'Suiton') or
-        string.find(name, 'Raiton') or
-        string.find(name, 'Doton') or
-        string.find(name, 'Huton') or
-        string.find(name, 'Hyoton')) then
+            string.find(name, 'Suiton') or
+            string.find(name, 'Raiton') or
+            string.find(name, 'Doton') or
+            string.find(name, 'Huton') or
+            string.find(name, 'Hyoton')) then
         return true;
     end
 end
